@@ -1,0 +1,13 @@
+{
+  "Name": "Timberborn MCP",
+  "Version": "1.1.2.0.1",
+  "Id": "Agroqirax.TimberbornMCP",
+  "MinimumGameVersion": "1.1.0.0",
+  "Description": "Allows an LLM to access timberborn",
+  "RequiredMods": [
+    {
+      "Id": "eMka.ModSettings",
+      "MinimumVersion": "1.0.1.0"
+    }
+  ]
+}

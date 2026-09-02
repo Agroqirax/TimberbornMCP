@@ -1,0 +1,5 @@
+ID,Text,Comment
+TimberbornMCP.Settings.Port,"Port","MCP server listen port setting label"
+TimberbornMCP.Settings.Port.Tooltip,"The TCP port the MCP server listens on. Restarting the server happens automatically when this changes.","MCP server listen port setting tooltip"
+TimberbornMCP.Settings.AuthToken,"Auth Token","MCP server auth token setting label"
+TimberbornMCP.Settings.AuthToken.Tooltip,"Bearer token required in the Authorization header of every MCP request. Leave blank to disable authentication.","MCP server auth token setting tooltip"

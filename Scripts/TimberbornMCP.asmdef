@@ -1,0 +1,21 @@
+{
+  "name": "TimberbornMCP",
+  "rootNamespace": "",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [
+    "Bindito.Core.dll",
+    "Timberborn.SingletonSystem.dll",
+    "Timberborn.SettingsSystem.dll",
+    "Timberborn.Modding.dll",
+    "ModSettings.Core.dll",
+    "Newtonsoft.Json.dll"
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
