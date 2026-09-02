@@ -1,86 +1,61 @@
 # Timberborn MCP
 
-Runs an [MCP](https://modelcontextprotocol.io) (Model Context Protocol) server inside Timberborn,
-so an LLM/agent can inspect and drive the game over HTTP. The server is a harness: this mod owns
-the transport, protocol handling, sessions, and auth, and ships one example tool
-(`get_game_scene`) — everything else, first-party or third-party, plugs in the same way.
+Give an LLM a socket into your Timberborn game.
 
-Requires [ModSettings](https://github.com/eMkaQQ/timberborn-modding) (`eMka.ModSettings`).
+This mod adds a [Model Context Protocol](https://modelcontextprotocol.io) server. Point any MCP client (claude, opencode, etc...) at `http://localhost:8787/mcp`, and it can query and act on the running game over plain HTTP.
 
-## Configuration
+TimberbornMCP itself only provides the plumbing (protocol, sessions, auth, one demo tool) and a public extension point. The interesting tools are meant to come from other mods.
 
-Open the mod's settings (gear icon in ModSettings, or in-game — settings here are editable both
-from the main menu and mid-save):
+## Features
 
-- **Port** — the MCP server's listen port. Defaults to `8787` (the base game's own HTTP API uses
-  `8080`, so this deliberately isn't that or `8081`). Changing it live-restarts the listener, no
-  game restart needed.
-- **AuthToken** — a random token is generated the first time the mod ever runs. Leave it as-is (or
-  edit/clear it) directly in the text field:
-  - **blank** → no authentication required.
-  - **non-blank** → every request must send `Authorization: Bearer <token>`.
+- **Everything built in**, no external process to run.
+- **Always running**: main menu, in a save, map editor. Started automatically on load, stopped on quit.
+- **Live-configurable**: change the port or token via [Mod Settings](https://steamcommunity.com/sharedfiles/filedetails/?id=3283831040) at any point.
+- **Optional bearer-token auth**: On by default with a randomly generated token.
+- **Open extension API** with `IMcpTool` & `IMcpResource`. Any mod can register tools with a couple lines of Bindito.
 
-The server starts automatically as soon as the mod loads and keeps running for the whole session —
-main menu, in a save, map editor — until you quit the game.
+## Quick start
 
-## Talking to it
+### Installation
 
-Single endpoint, `POST http://localhost:<port>/mcp`, using the MCP **Streamable HTTP** transport.
+- [Steam workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=xxxxxxx): Click subscribe
+- [Mod.io](https://mod.io/g/timberborn/m/timberborn-mcp): Download & extract to `~/Documents/Timberborn/Mods/timberbornmcp`.
+- [GitHub](https://github.com/agroqirax/timberbornmcp/releases/latest): Download & extract to `~/Documents/Timberborn/Mods/timberbornmcp`.
 
-```bash
-# 1. Initialize - grab the Mcp-Session-Id response header.
-curl -si http://localhost:8787/mcp \
-  -H 'Content-Type: application/json' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{}}}'
+1. Install this mod and launch the game.
+2. Open ModSettings and note the port (default `8787`) and auth token under "Timberborn MCP".
+3. Point your MCP client at `http://localhost:8787/mcp` (Streamable HTTP transport).
 
-# 2. List tools (include the session id from step 1).
-curl -s http://localhost:8787/mcp \
-  -H 'Content-Type: application/json' -H 'Mcp-Session-Id: <id-from-step-1>' \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
+Clear the `AuthToken` field in settings if you don't want to deal with the header at all.
 
-# 3. Call one.
-curl -s http://localhost:8787/mcp \
-  -H 'Content-Type: application/json' -H 'Mcp-Session-Id: <id-from-step-1>' \
-  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_game_scene","arguments":{}}}'
-```
+### Configuration
 
-If a token is configured, add `-H 'Authorization: Bearer <token>'` to every call, `initialize`
-included.
-
-## Adding your own tool (from another mod)
-
-No special API beyond implementing an interface and a standard Bindito `MultiBind` — the harness
-doesn't treat its own tools any differently.
-
-**Your `manifest.json`:**
+Add the following config to `.mcp.json` or your tools equivalent.
 
 ```json
 {
-  "RequiredMods": [
-    { "Id": "Agroqirax.TimberbornMCP", "MinimumVersion": "1.0.0.0" }
-  ]
+  "mcpServers": {
+    "timberborn": {
+      "type": "http",
+      "url": "http://localhost:8787/mcp",
+      "headers": {
+        "Authorization": "Bearer <your-token>"
+      }
+    }
+  }
 }
 ```
 
-**Your `.asmdef`:** add `"TimberbornMCP.dll"` to `precompiledReferences` (it sits alongside the
-other built mod DLLs once TimberbornMCP is built/deployed, same as any `Timberborn.*.dll`).
+## Building tools
 
-**Your tool + Configurator:**
+A tool is just a class implementing `IMcpTool`, bound with Bindito's `MultiBind`:
 
 ```csharp
-using Bindito.Core;
-using Newtonsoft.Json.Linq;
-using System.Threading.Tasks;
-using TimberbornMCP.Api;
-
 public class WeatherTool : IMcpTool {
   public string Name => "get_weather";
   public string Description => "Returns the current in-game weather state.";
   public JObject InputSchema => new() { ["type"] = "object", ["properties"] = new JObject() };
-
-  // Optional (return null for none) - descriptive hints per the MCP tool annotations spec, surfaced
-  // in tools/list. Not security-enforced, just a courtesy to clients (e.g. whether to confirm before calling).
-  public McpToolAnnotations Annotations => new() { ReadOnlyHint = true, OpenWorldHint = false };
+  public McpToolAnnotations Annotations => new() { ReadOnlyHint = true };
 
   public Task<McpToolResult> InvokeAsync(JObject arguments, McpToolContext context) {
     return Task.FromResult(McpToolResult.Text("Sunny. Beavers are pleased."));
@@ -95,13 +70,37 @@ public class MyModMcpConfigurator : Configurator {
 }
 ```
 
-That's the whole integration surface. Bind in `[Context("MainMenu")]`/`[Context("MapEditor")]` too
-if your tool should be available outside an active save. `IMcpResource` works the same way via
-`MultiBind<IMcpResource>()`.
+`manifest.json`:
 
-If your tool needs to touch Unity or game state (which is only safe from the main thread, while
-the MCP server itself runs on a background thread), use `context.MainThread.RunOnMainThread(...)`.
+```json
+{
+  ...,
+  "RequiredMods": [
+    {
+      "Id": "Agroqirax.TimberbornMCP",
+      "MinimumVersion": "1.1.2.0.1"
+    }
+  ]
+}
+```
 
-See `ARCHITECTURE.md` for how this all fits into Timberborn's Bindito/scene lifecycle, and for
-known spec simplifications (static bearer-token auth instead of MCP's OAuth flow, no SSE/streaming,
-no `prompts` capability).
+`*.asmdef`:
+
+```json
+{
+  ...,
+  "precompiledReferences": [
+    "TimberbornMCP.dll"
+  ]
+}
+
+```
+
+`IMcpResource` follows the same pattern via `MultiBind<IMcpResource>()`. Bind in additional
+`[Context(...)]` blocks (`MainMenu`, `MapEditor`) if a tool should work outside an active save.
+Game-state access must happen on the main thread — call it through
+`context.MainThread.RunOnMainThread(...)` from inside `InvokeAsync`.
+
+## License
+
+GPL-3.0 — see [LICENSE](LICENSE).
