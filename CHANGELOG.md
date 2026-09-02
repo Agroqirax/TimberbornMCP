@@ -11,6 +11,10 @@ All notable changes to this project will be documented in this file.
 - Extensibility API (`IMcpTool`, `IMcpResource`) so other mods can register their own tools the
   same way this mod registers its own.
 - Example tool: `get_game_scene`, returning the currently active Unity scene.
+- Built-in tool `get_modlist`, returning every installed mod (enabled or not) in load order with
+  its full manifest details.
+- Built-in tool `get_version`, returning the running game version and whether it's an experimental
+  branch build.
 - Tool annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`, `title`)
   via `IMcpTool.Annotations`, surfaced in `tools/list`.
 - Localized ModSettings labels/tooltips (`Data/Localizations/enUS.csv`).

@@ -15,6 +15,8 @@ namespace TimberbornMCP {
     protected override void Configure() {
       Bind<McpToolRegistrationBridge>().AsSingleton();
       MultiBind<IMcpTool>().To<GetGameSceneTool>().AsSingleton();
+      MultiBind<IMcpTool>().To<GetModListTool>().AsSingleton();
+      MultiBind<IMcpTool>().To<GetVersionTool>().AsSingleton();
     }
 
   }

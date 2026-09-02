@@ -11,6 +11,7 @@
     "Timberborn.SingletonSystem.dll",
     "Timberborn.SettingsSystem.dll",
     "Timberborn.Modding.dll",
+    "Timberborn.Versioning.dll",
     "ModSettings.Core.dll",
     "Newtonsoft.Json.dll"
   ],
