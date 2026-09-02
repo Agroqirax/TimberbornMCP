@@ -77,13 +77,41 @@ namespace TimberbornMCP.Api.JsonRpc {
     private McpDispatchResult HandleToolsList(JToken id) {
       var tools = new JArray();
       foreach (var tool in _registry.SnapshotTools()) {
-        tools.Add(new JObject {
+        var entry = new JObject {
           ["name"] = tool.Name,
           ["description"] = tool.Description,
           ["inputSchema"] = (JToken) tool.InputSchema ?? new JObject { ["type"] = "object", ["properties"] = new JObject() }
-        });
+        };
+        var annotations = BuildAnnotations(tool.Annotations);
+        if (annotations != null) {
+          entry["annotations"] = annotations;
+        }
+        tools.Add(entry);
       }
       return Ok(id, new JObject { ["tools"] = tools });
+    }
+
+    private static JObject BuildAnnotations(McpToolAnnotations hints) {
+      if (hints == null) {
+        return null;
+      }
+      var json = new JObject();
+      if (hints.Title != null) {
+        json["title"] = hints.Title;
+      }
+      if (hints.ReadOnlyHint.HasValue) {
+        json["readOnlyHint"] = hints.ReadOnlyHint.Value;
+      }
+      if (hints.DestructiveHint.HasValue) {
+        json["destructiveHint"] = hints.DestructiveHint.Value;
+      }
+      if (hints.IdempotentHint.HasValue) {
+        json["idempotentHint"] = hints.IdempotentHint.Value;
+      }
+      if (hints.OpenWorldHint.HasValue) {
+        json["openWorldHint"] = hints.OpenWorldHint.Value;
+      }
+      return json;
     }
 
     private async Task<McpDispatchResult> HandleToolsCallAsync(JToken id, JObject @params, CancellationToken cancellationToken) {

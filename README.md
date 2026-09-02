@@ -78,6 +78,10 @@ public class WeatherTool : IMcpTool {
   public string Description => "Returns the current in-game weather state.";
   public JObject InputSchema => new() { ["type"] = "object", ["properties"] = new JObject() };
 
+  // Optional (return null for none) - descriptive hints per the MCP tool annotations spec, surfaced
+  // in tools/list. Not security-enforced, just a courtesy to clients (e.g. whether to confirm before calling).
+  public McpToolAnnotations Annotations => new() { ReadOnlyHint = true, OpenWorldHint = false };
+
   public Task<McpToolResult> InvokeAsync(JObject arguments, McpToolContext context) {
     return Task.FromResult(McpToolResult.Text("Sunny. Beavers are pleased."));
   }

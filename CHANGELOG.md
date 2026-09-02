@@ -11,6 +11,9 @@ All notable changes to this project will be documented in this file.
 - Extensibility API (`IMcpTool`, `IMcpResource`) so other mods can register their own tools the
   same way this mod registers its own.
 - Example tool: `get_game_scene`, returning the currently active Unity scene.
+- Tool annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`, `title`)
+  via `IMcpTool.Annotations`, surfaced in `tools/list`.
+- Localized ModSettings labels/tooltips (`Data/Localizations/enUS.csv`).
 
 [unreleased]: https://github.com/agroqirax/timberbornmcp/compare/v1.1.2.0.1...HEAD
 [1.1.2.0.1]: https://github.com/agroqirax/timberbornmcp/releases/tag/1.1.2.0.1

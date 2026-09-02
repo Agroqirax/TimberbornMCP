@@ -25,6 +25,14 @@ namespace TimberbornMCP.Tools {
       ["properties"] = new JObject()
     };
 
+    public McpToolAnnotations Annotations => new() {
+      Title = "Get Game Scene",
+      ReadOnlyHint = true,
+      DestructiveHint = false,
+      IdempotentHint = true,
+      OpenWorldHint = false
+    };
+
     public Task<McpToolResult> InvokeAsync(JObject arguments, McpToolContext context) {
       var payload = new JObject { ["scene"] = _sceneCache.CurrentSceneName };
       return Task.FromResult(McpToolResult.Text(payload.ToString(Formatting.None)));

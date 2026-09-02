@@ -14,6 +14,9 @@ namespace TimberbornMCP.Api {
 
     JObject InputSchema { get; }
 
+    // Optional (return null for none). Surfaced as the tool's "annotations" in tools/list.
+    McpToolAnnotations Annotations { get; }
+
     Task<McpToolResult> InvokeAsync(JObject arguments, McpToolContext context);
 
   }
