@@ -22,9 +22,9 @@ TimberbornMCP itself only provides the plumbing (protocol, sessions, auth, one d
 - [Mod.io](https://mod.io/g/timberborn/m/timberborn-mcp): Download & extract to `~/Documents/Timberborn/Mods/timberbornmcp`.
 - [GitHub](https://github.com/agroqirax/timberbornmcp/releases/latest): Download & extract to `~/Documents/Timberborn/Mods/timberbornmcp`.
 
-1. Install this mod and launch the game.
-2. Open ModSettings and note the port (default `8787`) and auth token under "Timberborn MCP".
-3. Point your MCP client at `http://localhost:8787/mcp` (Streamable HTTP transport).
+Open ModSettings and note the port (default `8787`) and auth token under "Timberborn MCP".
+
+Point your MCP client at `http://localhost:8787/mcp` (Streamable HTTP transport).
 
 Clear the `AuthToken` field in settings if you don't want to deal with the header at all.
 
@@ -48,58 +48,8 @@ Add the following config to `.mcp.json` or your tools equivalent.
 
 ## Building tools
 
-A tool is just a class implementing `IMcpTool`, bound with Bindito's `MultiBind`:
-
-```csharp
-public class WeatherTool : IMcpTool {
-  public string Name => "get_weather";
-  public string Description => "Returns the current in-game weather state.";
-  public JObject InputSchema => new() { ["type"] = "object", ["properties"] = new JObject() };
-  public McpToolAnnotations Annotations => new() { ReadOnlyHint = true };
-
-  public Task<McpToolResult> InvokeAsync(JObject arguments, McpToolContext context) {
-    return Task.FromResult(McpToolResult.Text("Sunny. Beavers are pleased."));
-  }
-}
-
-[Context("Game")]
-public class MyModMcpConfigurator : Configurator {
-  protected override void Configure() {
-    MultiBind<IMcpTool>().To<WeatherTool>().AsSingleton();
-  }
-}
-```
-
-`manifest.json`:
-
-```json
-{
-  ...,
-  "RequiredMods": [
-    {
-      "Id": "Agroqirax.TimberbornMCP",
-      "MinimumVersion": "1.1.2.0.1"
-    }
-  ]
-}
-```
-
-`*.asmdef`:
-
-```json
-{
-  ...,
-  "precompiledReferences": [
-    "TimberbornMCP.dll"
-  ]
-}
-
-```
-
-`IMcpResource` follows the same pattern via `MultiBind<IMcpResource>()`. Bind in additional
-`[Context(...)]` blocks (`MainMenu`, `MapEditor`) if a tool should work outside an active save.
-Game-state access must happen on the main thread — call it through
-`context.MainThread.RunOnMainThread(...)` from inside `InvokeAsync`.
+TimberbornMCP itself only provides the plumbing. See [docs/building-tools.md](docs/building-tools.md)
+for how to write and register your own `IMcpTool`/`IMcpResource` implementations.
 
 ## License
 
