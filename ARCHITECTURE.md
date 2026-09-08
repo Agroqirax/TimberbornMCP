@@ -90,7 +90,52 @@ is shipped now, unused by `get_game_scene`, so that future tools needing to touc
 (saves, main-menu navigation, entity queries) have a ready-made bridge without inventing their own
 main-thread queue.
 
-## 6. Deliberate spec deviations
+**Only reach for `RunOnMainThread` when the work genuinely touches a thread-affine Unity API**
+(`GameObject`/`Transform`/`UIElements` traversal, `IAssetLoader`, anything else Unity's own docs say
+must run on its main thread) — see §6 for why, and for the alternative (a plain `lock`) when the real
+concern is a shared in-memory cache, not Unity thread affinity.
+
+## 6. `RunOnMainThread` and `Application.runInBackground` — don't reach for the main thread by reflex
+
+Unity does not call `MonoBehaviour.Update()` (and therefore not `IUpdatableSingleton.UpdateSingleton()`)
+on an unfocused window unless `Application.runInBackground` is `true` — it defaults to `false`, and
+this mod deliberately never sets it: it's a global player setting that would keep the *entire* game
+simulating in the background (time, production, autosave timers), not something scoped to the mod, so
+it's the user's call to make in their own player settings, not this mod's to force. Consequence:
+anything queued via `MainThreadDispatcher.RunOnMainThread` (`ConcurrentQueue`, drained only from
+`UpdateSingleton()`) simply never runs while the window is unfocused, and the HTTP request hangs until
+the player refocuses it.
+
+`get_version` and `get_game_scene` were never affected — the latter reads a field (`GameSceneCache`)
+already cached from a previous main-thread scene-change callback, per §3 — which made the original
+symptom (`list_blueprints` in the third-party `TimberbornMCPDevs` mod hanging while other tools kept
+responding) look tool-specific. It wasn't: every tool routed through `RunOnMainThread` has the same
+problem, e.g. TimberbornMCPDevs's `EditBlueprintTool`/`ListBlueprintSpecTypesTool`.
+
+The fix isn't a global engine setting — it's recognizing that most of those tools were never actually
+Unity-thread-affine to begin with. `ISpecService`'s blueprint caches, `BlueprintDeserializer`'s
+`SpecTypeCache`, and Harmony's patch tables are all plain `System.Collections.Generic` state read via
+reflection; nothing in that call path is a `UnityEngine.Object` or otherwise requires Unity's main
+thread. They were dispatched through `RunOnMainThread` only to get free serialization against
+`EditBlueprintTool` mutating the same dictionaries — and a plain `lock` around that shared state gets
+the same safety without depending on Unity's frame tick (or the window being focused) at all.
+TimberbornMCPDevs's blueprint/spec-type tools were changed to do exactly that (`BlueprintSpecJson.CacheLock`) instead of dispatching to the main thread.
+
+Two categories still have no such alternative, and keep `RunOnMainThread` (and the same
+hang-while-unfocused limitation, accepted as a documented trade-off rather than something worth
+forcing `Application.runInBackground` globally to paper over):
+
+- **Genuine Unity API thread affinity**: `GetUiTreeTool`, `GetSceneHierarchyTool`
+  (`GameObject`/`Transform`/`UIElements` traversal), `ListLocalizationsTool` (`IAssetLoader`). Unity
+  enforces that these calls happen on its own main thread.
+- **Shared state the game's main thread reads/writes continuously, not just at boot**:
+  `EditLocalizationTool` reflects into `ILoc`'s live `_localization`/`_localizationCache`
+  dictionaries, which every piece of UI text on screen reads every frame — a `lock` from our side
+  can't synchronize against that because the game's own `Loc` class doesn't take it, so mutating it
+  from an arbitrary background thread is a real, frequent race, unlike `ISpecService`'s blueprint
+  caches (only ever mutated by our own `EditBlueprintTool`, never by the game itself after boot).
+
+## 7. Deliberate spec deviations
 
 - **Auth**: a static `Authorization: Bearer <token>` check (constant-time compare), not the MCP
   spec's OAuth-based auth flow — this is a local single-player game, and the user explicitly wanted
