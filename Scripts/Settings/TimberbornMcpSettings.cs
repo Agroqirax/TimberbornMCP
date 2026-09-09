@@ -36,7 +36,7 @@ namespace TimberbornMCP.Settings {
       if (!settings.Has(tokenKey)) {
         settings.SetString(tokenKey, Guid.NewGuid().ToString("N"));
       }
-      AuthToken = new ModSetting<string>(settings.GetString(tokenKey, ""),
+      AuthToken = new AuthTokenModSetting(settings.GetString(tokenKey, ""),
           ModSettingDescriptor.CreateLocalized("TimberbornMCP.Settings.AuthToken")
               .SetLocalizedTooltip("TimberbornMCP.Settings.AuthToken.Tooltip"));
       Port = new ModSetting<int>(settings.GetInt(BuildKey(nameof(Port)), McpServerSettingsState.DefaultPort),

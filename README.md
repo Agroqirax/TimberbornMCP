@@ -4,15 +4,15 @@ Give an LLM a socket into your Timberborn game.
 
 This mod adds a [Model Context Protocol](https://modelcontextprotocol.io) server. Point any MCP client (claude, opencode, etc...) at `http://localhost:8787/mcp`, and it can query and act on the running game over plain HTTP.
 
-TimberbornMCP itself only provides the plumbing (protocol, sessions, auth, one demo tool) and a public extension point. The interesting tools are meant to come from other mods.
+TimberbornMCP itself only provides the plumbing (protocol, sessions, auth, demo tools) and a public extension point. The tools are meant to come from other mods.
 
 ## Features
 
-- **Everything built in**, no external process to run.
+- **Everything built in**: no external process to run.
 - **Always running**: main menu, in a save, map editor. Started automatically on load, stopped on quit.
 - **Live-configurable**: change the port or token via [Mod Settings](https://steamcommunity.com/sharedfiles/filedetails/?id=3283831040) at any point.
 - **Optional bearer-token auth**: On by default with a randomly generated token.
-- **Open extension API** with `IMcpTool` & `IMcpResource`. Any mod can register tools with a couple lines of Bindito.
+- **Open extension API**: any mod can register `IMcpTool` & `IMcpResource` with a couple lines of Bindito.
 
 ## Quick start
 
