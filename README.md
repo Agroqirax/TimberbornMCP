@@ -18,7 +18,7 @@ TimberbornMCP itself only provides the plumbing (protocol, sessions, auth, demo 
 
 ### Installation
 
-- [Steam workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=xxxxxxx): Click subscribe
+- [Steam workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3800093955): Click subscribe
 - [Mod.io](https://mod.io/g/timberborn/m/timberborn-mcp): Download & extract to `~/Documents/Timberborn/Mods/timberbornmcp`.
 - [GitHub](https://github.com/agroqirax/timberbornmcp/releases/latest): Download & extract to `~/Documents/Timberborn/Mods/timberbornmcp`.
 
